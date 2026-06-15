@@ -1,4 +1,9 @@
 fastapi
 uvicorn[standard]
 pydantic
-redis
+redis>=4.5.0
+# 指定额外的索引源，而不是覆盖主索引
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.1.0 # 或者 torch cpu 版本
+transformers
+sentencepiece
