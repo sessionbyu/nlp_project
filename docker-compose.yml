@@ -20,12 +20,19 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       - PYTHONPATH=/app
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-nlp_user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-nlp_pass}
+      - DB_NAME=${POSTGRES_DB:-nlp_db}
       - MODEL_PATH=/data/models/bert-base-chinese
       - USE_CACHE=true
       - LOG_LEVEL=INFO
@@ -108,11 +115,42 @@ services:
       - TZ=${TZ}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
 
+  # ==============================================
+  # PostgreSQL 服务：预测历史记录持久化存储
+  # ==============================================
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    container_name: nlp_postgres
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-nlp_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nlp_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-nlp_db}
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nlp_user} -d ${POSTGRES_DB:-nlp_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend
+
 # ==============================================
 # 命名卷（由 Docker 管理，位于 /var/lib/docker/volumes/）
 # ==============================================
 volumes:
   redis_data:
+  postgres_data:
 
 # ==============================================
 # 自定义网络（桥接模式，服务间可通过服务名通信）

@@ -1,9 +1,29 @@
-fastapi
-uvicorn[standard]
-pydantic
+# Web 框架
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
 redis>=4.5.0
+
+# 数据库
+sqlalchemy[asyncio]>=2.0.0
+# 使用 psycopg2-binary 替代 asyncpg（更兼容 slim 镜像）
+psycopg2-binary>=2.9.0
+# 如果必须使用 asyncpg，请尝试较低版本
+# asyncpg>=0.27.0
+
+# VADER 情感分析
+nltk>=3.8.0
+
+# 文件监控
+watchdog>=4.0.0
+
+# PyTorch 和相关包
 # 指定额外的索引源，而不是覆盖主索引
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.1.0 # 或者 torch cpu 版本
-transformers
-sentencepiece
+transformers>=4.35.0
+sentencepiece>=0.1.99
+
+# 其他常用依赖
+python-multipart>=0.0.6
+python-dotenv>=1.0.0
