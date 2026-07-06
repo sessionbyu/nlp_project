@@ -1,0 +1,61 @@
+# Prometheus 配置文件
+# 用于抓取NLP应用的Prometheus指标
+
+global:
+  scrape_interval: 15s      # 每15秒抓取一次指标
+  evaluation_interval: 15s  # 每15秒评估告警规则
+  external_labels:
+    cluster: 'nlp-project'
+    environment: 'production'
+
+# 告警规则文件
+rule_files:
+  - '/etc/prometheus/alerts/*.yml'
+
+# 抓取目标配置
+scrape_configs:
+  # NLP后端服务指标
+  - job_name: 'nlp-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # PostgreSQL数据库指标
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    # 使用postgres_exporter时需要取消注释
+    # metrics_path: '/metrics'
+
+  # Redis指标
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    # 使用redis_exporter时需要取消注释
+    # metrics_path: '/metrics'
+
+  # cAdvisor - Docker容器指标
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    scrape_timeout: 5s
+
+  # Node Exporter - 主机指标
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    scrape_timeout: 5s
+
+  # Prometheus自监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s

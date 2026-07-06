@@ -1,0 +1,15 @@
+{
+  "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2375"],
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com",
+    "https://mirror.ccs.tencentyun.com"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "storage-driver": "overlay2"
+}

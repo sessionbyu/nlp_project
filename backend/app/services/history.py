@@ -86,9 +86,11 @@ async def query_history(
         "records": [
             {
                 "id": r.id,
+                "user_id": r.user_id,
                 "input_text": r.input_text,
                 "label": r.label,
                 "score": r.score,
+                "model_key": r.model_key,
                 "source_ip": r.source_ip,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
             }
@@ -121,21 +123,41 @@ async def get_recent_history(
     ]
 
 
-async def get_stats(session: AsyncSession) -> dict:
-    """获取预测统计信息"""
+async def get_stats(session: AsyncSession, user_id: Optional[int] = None) -> dict:
+    """获取预测统计信息
+
+    Args:
+        session: 数据库会话
+        user_id: 用户 ID（可选，如果提供则只统计该用户的记录）
+    """
+    # 构建基础查询
+    query = select(PredictionHistory)
+
+    # 如果提供了 user_id，添加过滤条件
+    if user_id is not None:
+        query = query.where(PredictionHistory.user_id == user_id)
+
     # 总数
-    total_result = await session.execute(select(func.count(PredictionHistory.id)))
+    total_result = await session.execute(select(func.count()).select_from(query.subquery()))
     total = total_result.scalar() or 0
 
     # 按标签分组统计
     label_query = select(
         PredictionHistory.label, func.count(PredictionHistory.id)
     ).group_by(PredictionHistory.label)
+
+    if user_id is not None:
+        label_query = label_query.where(PredictionHistory.user_id == user_id)
+
     label_result = await session.execute(label_query)
     label_stats = {row[0]: row[1] for row in label_result.fetchall()}
 
     # 平均置信度
-    avg_result = await session.execute(select(func.avg(PredictionHistory.score)))
+    avg_query = select(func.avg(PredictionHistory.score))
+    if user_id is not None:
+        avg_query = avg_query.where(PredictionHistory.user_id == user_id)
+
+    avg_result = await session.execute(avg_query)
     avg_score = avg_result.scalar()
 
     return {

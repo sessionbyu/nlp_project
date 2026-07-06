@@ -1,0 +1,102 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'  # 可选：Slack告警
+
+# 告警接收模板
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# 告警路由
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  # 子路由：关键告警
+  routes:
+    # 关键告警：立即通知
+    - match:
+        severity: critical
+      receiver: 'critical'
+      continue: true
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # 警告告警
+    - match:
+        severity: warning
+      receiver: 'warning'
+      continue: true
+
+    # 信息告警
+    - match:
+        severity: info
+      receiver: 'info'
+
+# 接收器配置
+receivers:
+  # 默认接收器
+  - name: 'default'
+    # email_configs:
+    #   - to: 'admin@example.com'
+    #     from: 'alertmanager@example.com'
+    #     smarthost: 'smtp.example.com:587'
+    #     auth_username: 'alertmanager'
+    #     auth_password: 'password'
+
+  # 关键告警接收器
+  - name: 'critical'
+    # Slack配置示例
+    # slack_configs:
+    #   - channel: '#alerts-critical'
+    #     title: '🚨 关键告警: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}'
+    #     send_resolved: true
+    #     color: 'danger'
+
+    # 邮件配置
+    # email_configs:
+    #   - to: 'oncall@example.com'
+    #     subject: '[关键] {{ .GroupLabels.alertname }}'
+    #     body: |
+    #       告警名称: {{ .GroupLabels.alertname }}
+    #       严重性: Critical
+    #       服务: {{ .CommonLabels.service }}
+    #       描述: {{ .CommonAnnotations.description }}
+    #       开始时间: {{ .StartsAt }}
+
+  # 警告告警接收器
+  - name: 'warning'
+    # slack_configs:
+    #   - channel: '#alerts-warning'
+    #     title: '⚠️ 警告告警: {{ .GroupLabels.alertname }}'
+    #     text: '{{ .CommonAnnotations.description }}'
+    #     send_resolved: true
+    #     color: 'warning'
+
+  # 信息告警接收器
+  - name: 'info'
+    # slack_configs:
+    #   - channel: '#alerts-info'
+    #     title: 'ℹ️ 信息: {{ .GroupLabels.alertname }}'
+    #     text: '{{ .CommonAnnotations.description }}'
+    #     send_resolved: true
+    #     color: 'good'
+
+# 抑制规则
+inhibit_rules:
+  # 关键告警抑制警告
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['service']
+
+  # 服务不可用抑制其他告警
+  - source_match:
+      alertname: 'BackendDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['service']

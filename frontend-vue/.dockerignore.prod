@@ -1,0 +1,24 @@
+# Node modules
+node_modules/
+
+# Build output - 允许 Docker 生产构建时复制
+# dist/
+# dist-ssr/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+.dockerignore.prod

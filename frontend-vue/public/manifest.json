@@ -1,0 +1,71 @@
+{
+  "name": "NLP 预测平台",
+  "short_name": "NLP预测",
+  "description": "基于深度学习的中文文本情感分析平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "文本预测",
+      "short_name": "预测",
+      "description": "快速进行文本情感预测",
+      "url": "/#/predict",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "批量处理",
+      "short_name": "批量",
+      "description": "批量文本预测",
+      "url": "/#/batch",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "历史记录",
+      "short_name": "历史",
+      "description": "查看历史预测记录",
+      "url": "/#/history",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
+    }
+  ],
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}
