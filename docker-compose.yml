@@ -4,6 +4,53 @@
 
 services:
   # ==============================================
+  # Nginx 反向代理：统一入口
+  # 功能：
+  #   - 反向代理前端 Vue 应用（端口 80/443）
+  #   - 反向代理后端 FastAPI 接口（/api/*）
+  #   - 静态资源缓存和 Gzip 压缩
+  #   - WebSocket 支持
+  #   - 健康检查
+  # ==============================================
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    container_name: nlp_nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-8080}:80"
+      # HTTPS 端口（可选，生产环境启用）
+      # - "${NGINX_HTTPS_PORT:-8443}:443"
+    volumes:
+      # Nginx 配置文件
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 禁用默认配置
+      - ./nginx/empty.conf:/etc/nginx/conf.d/default.conf:ro
+      # Nginx 日志
+      - ./logs/nginx:/var/log/nginx
+      # SSL 证书（可选，生产环境启用）
+      # - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend-vue:
+        condition: service_started
+    environment:
+      - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend
+
+  # ==============================================
   # 后端服务：FastAPI NLP 推理接口
   # ==============================================
   backend:
@@ -11,10 +58,13 @@ services:
       context: ./backend
     restart: unless-stopped
     container_name: nlp_backend
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     ports:
       - "${BACKEND_PORT}:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/docker-entrypoint.sh:/app/entrypoint.sh:ro
       - ./data:/data
       - ./logs/backend:/app/logs/backend
     depends_on:
@@ -37,6 +87,8 @@ services:
       - USE_CACHE=true
       - LOG_LEVEL=INFO
       - LOG_DIR=/app/logs/backend
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - RATE_LIMIT_ENABLED=false
       - TZ=${TZ}
     healthcheck:
       # 健康检查：使用 Python 发送 HTTP 请求（避免安装 curl）
@@ -54,25 +106,32 @@ services:
       - backend
 
   # ==============================================
-  # 前端服务：Streamlit 交互界面
+  # 前端服务：Vue 3 + Element Plus 交互界面
+  # 注意：前端端口不再直接暴露，通过 Nginx 统一访问
   # ==============================================
-  frontend:
+  frontend-vue:
     build:
-      context: ./frontend
+      context: ./frontend-vue
+      dockerfile: Dockerfile
     restart: unless-stopped
-    container_name: nlp_frontend
-    ports:
-      - "${FRONTEND_PORT}:8501"
+    container_name: nlp_frontend_vue
+    expose:
+      - "80"  # 只暴露给内部网络，不映射到主机
     depends_on:
       backend:
         condition: service_healthy
     environment:
-      - BACKEND_URL=http://backend:8000
+      - VITE_API_BASE_URL=http://backend:8000
+      - VITE_API_TIMEOUT=10000
       - TZ=${TZ}
-      - LOG_DIR=/app/logs
     volumes:
-      - ./logs/frontend:/app/logs
-      - ./frontend:/app
+      - ./logs/frontend-vue:/var/log/nginx
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -80,7 +139,7 @@ services:
         max-file: "3"
     networks:
       - backend
-
+      
   # ==============================================
   # Redis 服务：缓存 + 任务队列
   # ==============================================

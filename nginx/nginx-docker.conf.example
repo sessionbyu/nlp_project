@@ -1,0 +1,9 @@
+# ==============================================
+# NLP 项目 Docker Nginx 配置
+# 使用 Docker 容器运行 Nginx
+# ==============================================
+# 复制此文件到项目根目录: nginx/nginx-docker.conf
+# 然后在 docker-compose.yml 中添加 nginx 服务
+
+# 注意：此配置需要在 docker-compose.yml 中添加 nginx 服务
+# 参考下方的 docker-compose.nginx.yml 示例

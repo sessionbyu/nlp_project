@@ -143,9 +143,25 @@ async def predict_text(
 async def predict_batch(
     texts: list, model_key: Optional[str] = None
 ) -> list:
-    """批量预测多条文本"""
+    """批量预测多条文本
+
+    Args:
+        texts: 文本列表
+        model_key: 模型 key
+
+    Returns:
+        结果列表，每个元素是一个字典，包含 label 和 score，或者 error
+    """
     results = []
     for text in texts:
-        result = await predict_text(text, model_key=model_key)
-        results.append(result)
+        try:
+            result = await predict_text(text, model_key=model_key)
+            results.append(result)
+        except Exception as e:
+            logger.error(f"Batch prediction failed for text: {text[:50]}... Error: {e}")
+            results.append({
+                "error": str(e),
+                "label": "错误",
+                "score": 0.0,
+            })
     return results

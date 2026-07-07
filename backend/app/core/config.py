@@ -59,5 +59,27 @@ class Settings:
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     LOG_DIR: Optional[str] = os.getenv("LOG_DIR", None)  # 例如 "/app/logs/backend"
 
+    # ==============================
+    # JWT 认证配置
+    # ==============================
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production-please-use-env")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24小时
+
+    # ==============================
+    # API 限流配置
+    # ==============================
+    RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+    RATE_LIMIT_DEFAULT_MAX: int = int(os.getenv("RATE_LIMIT_DEFAULT_MAX", "100"))
+    RATE_LIMIT_DEFAULT_WINDOW: int = int(os.getenv("RATE_LIMIT_DEFAULT_WINDOW", "3600"))  # 秒
+
+    # ==============================
+    # CORS 配置
+    # ==============================
+    # 允许的源列表，逗号分隔。当 allow_credentials=True 时，不能使用 ["*"]
+    CORS_ORIGINS: list = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    ).split(",")
+
 
 settings = Settings()

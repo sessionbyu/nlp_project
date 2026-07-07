@@ -1,0 +1,59 @@
+// 护眼配色方案 - 暖色调、低饱和度、降低蓝光
+// 主色调：柔和的青绿色（护眼且专业）
+$primary-gradient: linear-gradient(135deg, #5B9A8B 0%, #4A8B7A 100%);
+$primary-light: #6DB3A8;
+$primary-lighter: #E8F5F0;
+$primary-color: #5B9A8B;
+
+// 辅助色：温暖的珊瑚色（温和的橙粉色）
+$secondary-gradient: linear-gradient(135deg, #E8A87C 0%, #D4906A 100%);
+$secondary-light: #E8B89A;
+
+// 成功色：柔和的青绿色
+$success-gradient: linear-gradient(135deg, #68C3A0 0%, #5AB38D 100%);
+$success-color: #68C3A0;
+
+// 警告色：温暖的琥珀色
+$warning-gradient: linear-gradient(135deg, #E8B87C 0%, #D4A56A 100%);
+$warning-color: #E8B87C;
+
+// 错误色：柔和的珊瑚红（非刺眼红色）
+$danger-gradient: linear-gradient(135deg, #E87C7C 0%, #D46A6A 100%);
+$danger-color: #E87C7C;
+
+// 信息色：柔和的蓝灰色
+$info-gradient: linear-gradient(135deg, #7BA3C4 0%, #6B93B4 100%);
+$info-color: #7BA3C4;
+
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+$border-radius: 12px;
+$border-radius-sm: 8px;
+$border-radius-lg: 16px;
+
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// 护眼背景色（温暖的米白色系，避免纯白）
+$bg-primary: #F8F9FA;
+$bg-secondary: #FFFFFF;
+$bg-tertiary: #F0F2F5;
+$bg-hover: #E8ECF0;
+$bg-active: #DDE1E6;
+
+// 护眼深色背景（深灰绿色，非纯黑）
+$bg-dark-primary: #2C3E3A;
+$bg-dark-secondary: #3A4D49;
+$bg-dark-tertiary: #4A5D59;
+
+// 边框颜色（柔和的灰色）
+$border-color-light: #DCE1E6;
+$border-color-lighter: #E4E8EC;
+
+// 护眼文字色（深灰，非纯黑）
+$text-primary: #2C3E50;
+$text-secondary: #5A6878;
+$text-tertiary: #8A98A8;
+$text-white: #FFFFFF;
+$text-muted: #9AA8B8;

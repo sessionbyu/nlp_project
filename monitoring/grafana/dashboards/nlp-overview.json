@@ -1,0 +1,414 @@
+{
+  "dashboard": {
+    "title": "NLP项目监控看板",
+    "uid": "nlp-project-overview",
+    "version": 1,
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "refresh": "10s",
+    "tags": ["nlp", "monitoring"],
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      // ==============================================
+      // 行1: 服务状态概览
+      // ==============================================
+      {
+        "id": 1,
+        "title": "服务状态概览",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"nlp-backend\"}",
+            "legendFormat": "NLP Backend",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name",
+          "justifyMode": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "title": "PostgreSQL",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"postgres\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Redis",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"redis\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "预测总数",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(increase(nlp_predictions_total[1h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name",
+          "justifyMode": "auto"
+        }
+      },
+
+      // ==============================================
+      // 行2: 系统资源监控
+      // ==============================================
+      {
+        "id": 5,
+        "title": "内存使用",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes / 1024 / 1024",
+            "legendFormat": "常驻内存 (MB)",
+            "refId": "A"
+          },
+          {
+            "expr": "process_virtual_memory_bytes / 1024 / 1024",
+            "legendFormat": "虚拟内存 (MB)",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "decmbytes",
+            "custom": {
+              "min": 0
+            }
+          }
+        },
+        "options": {
+          "legend": {"displayMode": "list", "placement": "bottom"},
+          "tooltip": {"mode": "multi"}
+        }
+      },
+      {
+        "id": 6,
+        "title": "CPU使用率",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU使用率 (%)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 60},
+                {"color": "orange", "value": 80},
+                {"color": "red", "value": 90}
+              ]
+            }
+          }
+        }
+      },
+
+      // ==============================================
+      // 行3: GC监控
+      // ==============================================
+      {
+        "id": 7,
+        "title": "GC回收对象统计",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "python_gc_objects_collected_total{generation=\"0\"}",
+            "legendFormat": "Gen 0",
+            "refId": "A"
+          },
+          {
+            "expr": "python_gc_objects_collected_total{generation=\"1\"}",
+            "legendFormat": "Gen 1",
+            "refId": "B"
+          },
+          {
+            "expr": "python_gc_objects_collected_total{generation=\"2\"}",
+            "legendFormat": "Gen 2",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "GC回收频率",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(python_gc_collections_total[1m])",
+            "legendFormat": "Gen {{generation}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "min": 0
+          }
+        }
+      },
+
+      // ==============================================
+      // 行4: HTTP请求指标
+      // ==============================================
+      {
+        "id": 9,
+        "title": "请求QPS",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "sum by (endpoint) (rate(http_requests_total[1m]))",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "rps"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "请求延迟 (P50/P95/P99)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+
+      // ==============================================
+      // 行5: NLP业务指标
+      // ==============================================
+      {
+        "id": 11,
+        "title": "预测趋势",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "sum by (model_key) (increase(nlp_predictions_total[5m]))",
+            "legendFormat": "模型: {{model_key}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "预测延迟",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(nlp_prediction_duration_seconds_bucket[5m])) by (le, model_key))",
+            "legendFormat": "{{model_key}} P95",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+
+      // ==============================================
+      // 行6: 缓存和数据库
+      // ==============================================
+      {
+        "id": 13,
+        "title": "缓存命中率",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "sum(rate(cache_hits_total[10m])) / (sum(rate(cache_hits_total[10m])) + sum(rate(cache_misses_total[10m])))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 0.3},
+                {"color": "green", "value": 0.7}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "数据库连接数",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 36},
+        "targets": [
+          {
+            "expr": "pg_stat_activity_count",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 60},
+                {"color": "red", "value": 80}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 15,
+        "title": "Redis连接数",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 36},
+        "targets": [
+          {
+            "expr": "redis_connections_active",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 80}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

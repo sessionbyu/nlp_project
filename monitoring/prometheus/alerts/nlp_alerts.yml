@@ -1,0 +1,233 @@
+# ==============================================
+# 告警规则 - NLP项目
+# ==============================================
+
+groups:
+  # ==============================================
+  # 内存告警
+  # ==============================================
+  - name: memory_alerts
+    interval: 30s
+    rules:
+      # 常驻内存使用率过高（>80% of 512MB）
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 512 * 1024 * 1024 * 0.8
+        for: 2m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "NLP后端内存使用过高"
+          description: "常驻内存使用率超过80% (当前: {{ $value | humanize1024 }})"
+
+      # 内存使用率严重（>90% of 512MB）
+      - alert: CriticalMemoryUsage
+        expr: process_resident_memory_bytes > 512 * 1024 * 1024 * 0.9
+        for: 1m
+        labels:
+          severity: critical
+          service: nlp-backend
+        annotations:
+          summary: "NLP后端内存使用严重过高"
+          description: "常驻内存使用率超过90% (当前: {{ $value | humanize1024 }})"
+
+      # 虚拟内存异常（>4GB）
+      - alert: HighVirtualMemory
+        expr: process_virtual_memory_bytes > 4 * 1024 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "虚拟内存使用异常"
+          description: "虚拟内存超过4GB (当前: {{ $value | humanize1024 }})"
+
+  # ==============================================
+  # GC告警
+  # ==============================================
+  - name: gc_alerts
+    interval: 30s
+    rules:
+      # GC频繁回收（Gen 0）
+      - alert: FrequentGCCollection
+        expr: rate(python_gc_collections_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "GC回收过于频繁"
+          description: "GC每秒回收超过10次，可能存在大量临时对象"
+
+      # 存在无法回收的对象
+      - alert: UncollectableObjects
+        expr: python_gc_objects_uncollectable_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nlp-backend
+        annotations:
+          summary: "发现无法回收的对象"
+          description: "存在循环引用，无法被GC回收（总数: {{ $value }})"
+
+  # ==============================================
+  # 服务可用性告警
+  # ==============================================
+  - name: service_availability
+    interval: 30s
+    rules:
+      # 后端服务不可用
+      - alert: BackendDown
+        expr: up{job="nlp-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nlp-backend
+        annotations:
+          summary: "NLP后端服务不可用"
+          description: "后端服务已停止响应超过1分钟"
+
+      # 数据库连接失败
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: "PostgreSQL数据库不可用"
+          description: "数据库连接失败"
+
+      # Redis不可用
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis不可用"
+          description: "Redis服务已停止响应"
+
+  # ==============================================
+  # 业务指标告警
+  # ==============================================
+  - name: business_alerts
+    interval: 1m
+    rules:
+      # 预测错误率过高（>5%）
+      - alert: HighPredictionErrorRate
+        expr: |
+          rate(http_requests_total{status_code=~"5.."}[5m])
+          /
+          rate(http_requests_total[5m])
+          > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "预测错误率过高"
+          description: "5分钟内5xx错误率超过5%"
+
+      # 请求延迟过高（P95 > 2s）
+      - alert: HighRequestLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 3m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "请求延迟过高"
+          description: "P95请求延迟超过2秒"
+
+      # 缓存命中率过低（<30%）
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(cache_hits_total[10m]))
+          /
+          (sum(rate(cache_hits_total[10m])) + sum(rate(cache_misses_total[10m])))
+          < 0.3
+        for: 10m
+        labels:
+          severity: info
+          service: nlp-backend
+        annotations:
+          summary: "缓存命中率过低"
+          description: "缓存命中率低于30%，建议优化缓存策略"
+
+  # ==============================================
+  # 资源告警
+  # ==============================================
+  - name: resource_alerts
+    interval: 30s
+    rules:
+      # CPU使用率过高（>80%）
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: node
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率超过80%"
+
+      # 磁盘使用率过高（>85%）
+      - alert: HighDiskUsage
+        expr: |
+          (node_filesystem_size_bytes - node_filesystem_avail_bytes)
+          / node_filesystem_size_bytes
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: node
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "磁盘使用率超过85%"
+
+      # 数据库连接数过高
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: "数据库连接数过高"
+          description: "当前连接数: {{ $value }}"
+
+  # ==============================================
+  # NLP特定告警
+  # ==============================================
+  - name: nlp_specific_alerts
+    interval: 1m
+    rules:
+      # 预测耗时异常（P95 > 3s）
+      - alert: SlowPrediction
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(nlp_prediction_duration_seconds_bucket[10m])) by (le)
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: nlp-backend
+        annotations:
+          summary: "NLP预测耗时过长"
+          description: "P95预测耗时超过3秒"
+
+      # 模型加载失败
+      - alert: ModelLoadFailure
+        expr: increase(nlp_model_load_errors_total[10m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: nlp-backend
+        annotations:
+          summary: "模型加载失败"
+          description: "检测到模型加载错误"
